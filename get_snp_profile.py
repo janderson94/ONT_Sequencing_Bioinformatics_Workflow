@@ -2,9 +2,7 @@
 
 #Add citation to original manuscript
 
-#!/bin/python
-
-resultDir = './genotypes_bcftools/'
+resultDir = './genotypes/'
 
 
 snpData = {}

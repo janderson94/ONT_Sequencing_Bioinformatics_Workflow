@@ -163,4 +163,53 @@ l=`wc -l commands.sh | awk '{print $1}'`
 
 echo "Mapping reads"
 sbatch --mem=10G -a 1-$l%$l --wait --job-name='map' array.sh
-echo "Reads mapped"
+echo "Reads mapped succesfully"
+
+
+
+
+
+###############################################################
+#               GENOTYPE CALLING
+###############################################################
+
+# We have found that using more traditional genotyping tools (e.g. samtools pileup/bcftools call) works better than nanopolish based genotyping.
+# As a result, we will use a simple pileup and look at the counts of reference and alternate alleles at each locus for each sample.
+# Filtering can easily be performed on these data (e.g. filtering based on depth).
+touch commands.sh
+rm commands.sh
+
+for f in `cat barcodes.txt`
+do
+  cat pileup.sh | sed -e 's/BARCODE/'$f'/g' > pileup.$f.sh
+  echo "sh "pileup.$f.sh >> commands.sh
+done
+
+l=`wc -l commands.sh | awk '{print $1}'`
+
+echo "Genotype calling"
+sbatch --mem=10G -a 1-$l%$l --wait --job-name='genotype' array.sh
+echo "Genotyping finished successfully"
+
+
+
+
+# Lastly, we want to summarize the genotype calls for each individual
+
+for f in `cat barcodes.txt`
+do
+  cat get_snp_profile.py | sed -e 's/BARCODE/'$f'/g' > get_snp_profile.$f.py
+  echo "python "get_snp_profile.$f.py >> commands.sh
+done
+
+l=`wc -l commands.sh | awk '{print $1}'`
+
+echo "Processing VCFs"
+sbatch --mem=10G -a 1-$l%$l --wait --job-name='genotype' array.sh
+echo "VCFs processed successfully"
+
+
+
+
+
+#Finally we need to merge this information into a coverage file a genotype file
